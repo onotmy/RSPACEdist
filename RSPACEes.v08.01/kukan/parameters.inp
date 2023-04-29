@@ -1,0 +1,130 @@
+! modified 2020/12/14
+&nml_inp_prm_kukan
+ndisp       =     66   ! outputfile (6: display, other: output.dat)
+catmfn      ='atom.xyz'! filename of atomic coordinate
+nprocx      =      1   ! # of processes (x)
+nprocy      =      1   ! # of processes (y)
+nprocz      =      1   ! # of processes (z)
+nprock      =      1   ! # of processes (k)
+xmax        =  2.5d0   ! length of supercell (x in bohr, total length is 2*xmax)
+ymax        =  2.5d0   ! length of supercell (y in bohr, total length is 2*ymax)
+zmax        =  8.0d0   ! length of supercell (z in bohr, total length is 2*zmax)
+nxmax       =      8   ! # of grid points (x, total number is 2*nxmax)
+nymax       =      8   ! # of grid points (y, total number is 2*nymax)
+nzmax       =     26   ! # of grid points (z, total number is 2*nzmax)
+npxmax      =     -1   ! # of grid points in augmented sphere in (x, total number is 2*npxmax)
+npymax      =     -1   ! (if one of them is less than zero, they are automatically determined.)
+npzmax      =     -1
+nsym        =      0   ! symmetric operation. 0: non, 1: BCC, 2: FCC, 3: DIA, 4: HCP
+neigmx      =     18   ! # of states per k point
+natom       =      2   ! # of atoms
+num_atcell  =     -1   ! # of atoms per sub-domain (if less than 0, it corresponds to natom)
+num_ppcell  =     -1   ! # of non-localparts of p.p. per sub-domain on coarse grid (if less than 0, it corresponds to natom)
+num_ppcell_d=     -1   ! # of non-localparts of p.p. per sub-domain on dense grid (if less than 0, it corresponds to natom)
+nperi       =      3   ! switchs for periodic boundary conditions (0; isolated, 3; periodic)
+npopshow    =      0   ! switchs for display of atomic population (0;noshow 1;show)
+numkx       =      1   ! # of sampling k points (x)
+numky       =      1   ! # of sampling k points (y)
+numkz       =      1   ! # of sampling k points (z)
+ksym        =      0   ! symmetry of kpoints
+kband       =      0   ! swich to output band map data. 0: not output, 1: output
+skpx(1)     =  0.0d0   ! kx
+skpy(1)     =  0.0d0   ! ky
+skpz(1)     =  0.0d0   ! kz
+nwkp(1)     =      1   ! weight for the point
+cexco       =  'vwn'   ! type of exchange correlation functional vwn,pz,pbe,pw91
+nspv        =      2   ! spin (1; degenerate, 2; free_collinear, 4; free_noncollinear)
+epsvh       = 1.0d-12  ! criteria of the convergency for CG (P. eq.)
+epssd       = 1.0d-6   ! criteria of the convergency for CG (KS eq.)
+ratio_diis  =  0.3d0   ! criteria of the convergency for DIIS (KS eq.)
+eps_scf     = 1.0d-6   ! criteria of the convergency for SCF
+ncgmin      =      1   ! min. # of its. for CG (P. eq.)
+ncgmax      =    800   ! max. # of its. for CG (P. eq.)
+ncgres      =    801   ! restart for CG (P. eq.):N (1/N its.)
+nprecon_cg  =      1   ! switch for preconditioning CG (KS eq.) (0;no 1;yes)
+nprecon_diis=      1   ! switch for preconditioning  DIIS (KS eq.) (0;no 1;yes)
+nsdmax      =      4   ! max. # of its. for CG (KS eq.)
+nkscg       =      1   ! switch for CG (KS eq.) (0;no 1;yes)
+ndiismax    =      4   ! max. # of its. for DIIS (KS eq.)
+ncgscf      =    200   ! min. # of SCF its. using CG before DIIS
+nretcg      =   2000   ! retry of CG:N (1/N scf)
+nrrz        =      1   ! rayleigh-ritz or orthogonalization of WFs in the case of DIIS:N (1/N scf)
+nchange     =      1   ! re-order eigenstates:N (1/N scf)
+eta         = 0.02d0   ! mixing ratio of charge density
+looplimit   =   1000   ! max. # of its. for SCF
+nbrydn      =     20   ! # of steps for Broyden mixing
+etamag(1)   = 0.02d0   ! mixing ratio for magnetic moment
+etamag(2)   =  2.0d0   ! increment factor for mixing of magnetic moment
+tmstep      =  0.0d0   ! time step of Str. Opt. (a.u.)
+nmd_start   =      0   ! its. # of SO
+nmd_end     =      1   ! its. # of SO (nmd_end-nmd_start is the total # of it. of SO)
+ngdiis      =      1   ! # of steps for GDIIS
+sconst      =  0.0d0   ! spring constant for NEB
+biasx       =  0.0d0   ! electric field in x (a.u.)
+biasy       =  0.0d0   ! electric field in y (a.u.)
+biasz       =  0.0d0   ! electric field in z (a.u.)
+tf          = 3.0d-3   ! Temp. for Fermi dist. (KT) (a.u.)
+tfmin       = -3.0d2   ! min. of expected Fermi level (a.u.)
+tfmax       =  3.0d2   ! max. of expected Fermi level (a.u.)
+chrgd       =  0.0d0   ! (tot.neg.charge)-(tot.pos.charge)
+npolcon     =      0   ! spin pol.(0; free, 1; cf. atom.mag, 2; constr.tot.)
+polconocc   =  2.7d0   ! tot. spin pol.
+endjel      =  0.0d0   ! edge of jellium (if you do not use jellium, set chrjel to be zero.)
+chrjel      =  0.0d0   ! charge of jellium (if you do not use jellium, set chrjel to be zero.)
+fcut        = 1.0d-5   ! cutoff of force (a.u.)
+npre        =      1   ! swich for computation of initial wavefunctions & charge density (0; read from files, 1; generate, 2; generate only)
+nevhist     =      3   ! swich for charge potential & density (0: wf only, 1: wf+rho, 2: wf+Htr pot., 3: wf+rho+Htr pot., -1: non SCF calc.)
+northo      =      1   ! # of its. for orthogonalization
+lveffout    = .false.  ! swich for outout KS effective potential Potential.txt
+nso         =      0   ! spin-orbit parameters
+socang(1)   =  0.0d0   ! spin-orbit parameters
+socang(2)   =  0.0d0   ! spin-orbit parameters
+socang(3)   =  0.0d0   ! spin-orbit parameters
+eps         =1.0d-16   ! computer epsilon
+eps_eig_diis=1.0d-14   ! parameters for DIIS
+alambda_diis=  0.5d0   ! parameters for DIIS
+alambda_min =  0.1d0   ! parameters for DIIS
+alambda_max =  1.0d0   ! parameters for DIIS
+
+! parameters for pseudopotential
+nradmx      =   1502   ! max. # of radial grids in pseusopotential
+nrprjmx     =      6   ! max. # of radial functions in pseudopotential. e.g., s*2 p*2 d*2 =6
+nprjmx      =     18   ! max. # of projectors in pseudopotential. e.g., s*2 p*6 d*10 =18
+
+! parameters for numerical integration in augmented sphere
+lsphel      =      8   ! order of spherical integration
+nlmax       =      4   ! order of spherical harminics
+lrhomx      =     25   ! the number of spherical harminics
+
+! parameters for filtering of pseudopotential
+nfiltyp     =      1   ! filtering type of pseudopotential (0; King-Smith type [KS], 1; Fermi distribution [FD])
+gmaxps      = 20.0d0   ! cutoff of pseusopotential (in sqrt(Ry))
+psctoff     = 1.05d0   ! cutoff radius radius of pp
+nqmx        =    400   ! the number of waves to expand projectors [KS]
+psftrad     = 10.0d0   ! period of the waves [KS]
+psctrat     =  1.0d0   ! cutoff ratio of the waves to expand projectors [KS]
+psext       =  2.0d0   ! cutoff ratio of the waves to vanish the projectors outside the augmented sphere [KS]
+filpp       = 0.02d0   ! filtering parameter in the case of nfiltyp=1 [FD]
+rctpcc      =  2.0d0   ! cutoff radius ratio of pcc charge in the case of nfiltyp=1 [FD]
+
+! parameters for Ewald summation
+veta        =  0.2d0   ! separating parameter
+new_pwx     =     11   ! parameters for Ewald summation (x, plane wave part)
+new_pwy     =     11   ! parameters for Ewald summation (y, plane wave part)
+new_pwz     =     11   ! parameters for Ewald summation (z, plane wave part)
+new_rsx     =     11   ! parameters for Ewald summation (x, real part)
+new_rsy     =     11   ! parameters for Ewald summation (y, real part)
+new_rsz     =     11   ! parameters for Ewald summation (z, real part)
+nint1dmax   =   1000   ! # of grid points for numerical integration for 1D periodic boundary condition
+
+! parameters for finite-difference & double grid
+nf          =      4   ! order of finite difference for KS Eq.
+nfdg        =      4   ! order of Lagrange interpolation of DG tech.
+nfh         =      4   ! order of finite difference for P. Eq.
+nmesh       =      2   ! the number of grids for double-grid technique (potential)
+npmesh      =      2   ! the number of grids for double-grid technique (nonlocal pseudopotential)
+
+! parameters for initial guess for wave func. and charge dens.
+zs_pre      =  0.5d0   ! initial spread of wave functions
+pol_pre     =  1.5d0   ! initial spin polarization of charge density
+/
