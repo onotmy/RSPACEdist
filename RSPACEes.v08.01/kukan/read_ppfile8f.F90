@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  read_ppfile8f.F90 12/05/2022-01  **********
+! **********  read_ppfile8f.F90 08/27/2023-01  **********
 
 module mod_read_ppfile
 implicit none
@@ -134,9 +119,10 @@ pi=dacos(-1.0d0)
       call stopp(cherror//'type of pseudopotential is unknown')
     end select
     read(10,*,err=9999) chara
-    read(10,*,err=9999) j,i
+    read(10,*,err=9999) j,cp(1,ispe)
     if (j .ne. mspe(ispe)) call stopp(cherror//'wrong atomic number')
-    cp(1,ispe)=dfloat(i)
+    i=nint(cp(1,ispe)*10000.0d0)
+    cp(1,ispe)=dfloat(i)/10000.0d0
     read(10,*,err=9999) chara
     read(10,*,err=9999) i
     lpmx(ispe)= i-1

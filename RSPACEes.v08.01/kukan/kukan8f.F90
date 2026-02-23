@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  kukan8f.F90 04/27/2023-01  **********
+! **********  kukan8f.F90 10/26/2024-01  **********
 
 use mod_mpi
 use mod_stopp
@@ -106,9 +91,9 @@ character:: chdirinp*200,chdirout*200,fname*200
     fname='mdresult.dat'
     if (len_trim(chdirout) > 0) fname=trim(chdirout)//'/'//fname
     open(12,file=fname)
-    write(6,*) 'computed by kukan8f 04/27/2023-01'
-    write(nndisp,*) 'computed by kukan8f 04/27/2023-01'
-    write(12,*)    'computed by kukan8f 04/27/2023-01'
+    write(6,*) 'computed by kukan8f 10/26/2024-01'
+    write(nndisp,*) 'computed by kukan8f 10/26/2024-01'
+    write(12,*)    'computed by kukan8f 10/26/2024-01'
   end if !myrank_glbl==0
   call stopp_initialize (nndisp)
   call proccount(6)
@@ -429,7 +414,7 @@ character:: chdirinp*200,chdirout*200,fname*200
                     num_atcell,num_ppcell,num_ppcell_d,num_list,num_list_d,                                                & ! <
                     key_pp_paw,key_natpri_in,key_natpri_inps,key_natpri_out,key_jel_calc,                                  & ! <
                     eps,veta,psctoff,psftrad,filpp,rctpcc,chrjel,strjel,endjel,                                            & ! <
-                    xmax,ymax,zmax,biasx,biasy,biasz,                                                                      & ! <
+                    xmax,ymax,zmax,                                                                                        & ! <
                     indspe,nlind,noind,nqct,nqctpcc,ntyppp,nprj,lpmx,nradct,                                               & ! <
                     coef,cp,radial,dradial,potc,awf,pwf,                                                                   & ! <
                     yylm,point,wt,                                                                                         & ! <
@@ -585,7 +570,7 @@ character:: chdirinp*200,chdirout*200,fname*200
      npolcon,                                                        & ! <
      key_natpri_in,key_natpri_inps,key_pp_paw,                       & ! <
      key_polcon_atoms,key_polcon_asa,key_polcon2_none,               & ! <
-     ddx,ddy,ddz,                                                    & ! <
+     ddx,ddy,ddz,biasx,biasy,biasz,                                  & ! <
      npolcon2,ntyppp,nradct,nprj,npr,indspe,natpri,natpri_inf,       & ! <
      nwexp,natinfd,napsd,natprid,lpmx,                               & ! <
      nlind,noind,lstvecd2,                                           & ! <
@@ -595,7 +580,7 @@ character:: chdirinp*200,chdirout*200,fname*200
      vh_dense,vloc_dense,                                            & ! <
      vhtrur,vhsmtr,vhaugr,                                           & ! <
      vxctru,vxcsmt,vcorer_all,vcorer,qijl,akv,polconb,yylm,wt,       & ! <
-     dij)                                               ! >
+     dij)                                                              ! >
     if (nso==1) call scf_dij_soc( &
      natom,num_atcell,num_spe,nprmx,nprjmx,lmx,nradmx,npoint,nspv,            & ! <
      key_natpri_in,key_pp_paw,key_soc_calc,                                   & ! <
@@ -878,6 +863,7 @@ character:: chdirinp*200,chdirout*200,fname*200
                  rhotrur_o,rhosmtr_o,rhoaugr,drhoaug3ddx,drhoaug3ddy,drhoaug3ddz,                     & ! <
                  rho_coarse,rho_aug_dense,vloc_dense,vh_dense,vx_dense,                               & ! <
                  chrjel,strjel,endjel,                                                                & ! <
+                 ndatx,ndaty,ndatz,                                                                   & ! <
                  fatx,faty,fatz,                                                                      & ! X
                  fjel)                                                                                  ! >
     end if

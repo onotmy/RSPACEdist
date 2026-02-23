@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  force8f.F90 04/27/2023-01  **********
+! **********  force8f.F90 05/06/2023-01  **********
 
 module mod_force
 implicit none
@@ -1644,6 +1629,7 @@ subroutine force(natom,num_spe,num_atcell,num_ppcell_d,num_list_d,nqmx,nradmx,np
                  rhotrur,rhosmtr,rhoaugr,drhoaug3ddx,drhoaug3ddy,drhoaug3ddz,                         & ! <
                  rho_coarse,rho_aug_dense,vloc_dense,vh_dense,vx_dense,                               & ! <
                  chrjel,strjel,endjel,                                                                & ! <
+                 ndatx,ndaty,ndatz,                                                                   & ! <
                  fatx,faty,fatz,                                                                      & ! X
                  fjel)                                                                                  ! >
 use mod_mpi
@@ -1657,6 +1643,7 @@ integer,intent(in)   ::indspe(natom),natpri(natom),natpri_inf(natom),nradct(num_
 integer,intent(in)   ::napsd(natom),natinfd(natom),natinfd_vloc(natom),nqctpcc(num_spe)
 integer,intent(in)   ::lstdx(num_list_d,num_ppcell_d),lstdy(num_list_d,num_ppcell_d),lstdz(num_list_d,num_ppcell_d)
 integer,intent(in)   ::lstvecd2(num_list_d,num_ppcell_d)
+integer,intent(in)   ::ndatx(natom),ndaty(natom),ndatz(natom)
 real*8, intent(in)   ::veta,psctoff,psftrad
 real*8, intent(in)   ::xmax,ymax,zmax
 real*8, intent(in)   ::biasx,biasy,biasz
@@ -1729,6 +1716,7 @@ real*8 derf
                   drhoaug3ddx,drhoaug3ddy,drhoaug3ddz,                   & ! <
                   dvlocdx_scw,dvlocdy_scw,dvlocdz_scw,                   & ! <
                   dvlocdx_hdp,dvlocdy_hdp,dvlocdz_hdp,                   & ! <
+                  ndatx,ndaty,ndatz,atx,aty,atz,biasx,biasy,biasz,       & ! <
                   vloc_dense)                                              ! <
 !$omp end parallel
     fatx(na)=fatx(na)+tmpx
@@ -2035,16 +2023,18 @@ subroutine force_01(natom,nmesh,na,ncpx,ncpy,ncpz,num_ppcell_d,num_list_d, & ! <
                     drhoaug3ddx,drhoaug3ddy,drhoaug3ddz,                   & ! <
                     dvlocdx_scw,dvlocdy_scw,dvlocdz_scw,                   & ! <
                     dvlocdx_hdp,dvlocdy_hdp,dvlocdz_hdp,                   & ! <
+                    ndatx,ndaty,ndatz,atx,aty,atz,biasx,biasy,biasz,       & ! <
                     vloc_dense)                                              ! <
 use mod_mpi
 implicit none
 integer,intent(in)::natom,nmesh,na,ncpx,ncpy,ncpz,num_ppcell_d,num_list_d
 integer,intent(in)::key_natpri_inps
-real*8,intent(in)::dx,dy,dz
+real*8,intent(in)::dx,dy,dz,biasx,biasy,biasz
 real*8,intent(inout)::tmpx,tmpy,tmpz
 integer,intent(in)::natprid(natom),napsd(natom),natinfd(natom),natinfd_vloc(natom)
 integer,intent(in)::lstdx(num_list_d,num_ppcell_d),lstdy(num_list_d,num_ppcell_d),lstdz(num_list_d,num_ppcell_d)
 integer,intent(in)::lstvecd2(num_list_d,num_ppcell_d)
+integer,intent(in)::ndatx(natom),ndaty(natom),ndatz(natom)
 real*8,intent(in)::rho_coarse(ncpx,ncpy,ncpz)
 real*8,intent(in)::rho_aug_dense(ncpx*nmesh,ncpy*nmesh,ncpz*nmesh)
 real*8,intent(in)::vh_dense(ncpx*nmesh,ncpy*nmesh,ncpz*nmesh)
@@ -2053,12 +2043,13 @@ real*8,intent(in)::dvlocdx_scw(ncpx,ncpy,ncpz,natom),dvlocdy_scw(ncpx,ncpy,ncpz,
 real*8,intent(in)::dvlocdx_hdp(num_list_d,num_ppcell_d)
 real*8,intent(in)::dvlocdy_hdp(num_list_d,num_ppcell_d)
 real*8,intent(in)::dvlocdz_hdp(num_list_d,num_ppcell_d)
+real*8,intent(in)::atx(natom),aty(natom),atz(natom)
 real*8 drhoaug3ddx(num_list_d,num_ppcell_d)
 real*8 drhoaug3ddy(num_list_d,num_ppcell_d)
 real*8 drhoaug3ddz(num_list_d,num_ppcell_d)
 integer ix,iy,iz,ixyz,i
 real*8 tmpx0,tmpy0,tmpz0,dxyz,ddxyz
-real*8 ddx,ddy,ddz
+real*8 ddx,ddy,ddz,x,y,z
 
   ddx=dx/dble(nmesh)
   ddy=dy/dble(nmesh)
@@ -2099,9 +2090,12 @@ real*8 ddx,ddy,ddz
       iy=lstdy(ixyz,napsd(na))
       iz=lstdz(ixyz,napsd(na))
       i=lstvecd2(ixyz,napsd(na))
-      tmpx0=tmpx0+(vloc_dense(i,1,1)+vh_dense(i,1,1))*drhoaug3ddx(ixyz,napsd(na))*ddxyz
-      tmpy0=tmpy0+(vloc_dense(i,1,1)+vh_dense(i,1,1))*drhoaug3ddy(ixyz,napsd(na))*ddxyz
-      tmpz0=tmpz0+(vloc_dense(i,1,1)+vh_dense(i,1,1))*drhoaug3ddz(ixyz,napsd(na))*ddxyz
+      x=ix*ddx+(ndatx(na)*ddx-0.5d0*ddx)
+      y=iy*ddy+(ndaty(na)*ddy-0.5d0*ddy)
+      z=iz*ddz+(ndatz(na)*ddz-0.5d0*ddz)
+      tmpx0=tmpx0+(vloc_dense(i,1,1)+vh_dense(i,1,1)+biasx*x+biasy*y+biasz*z)*drhoaug3ddx(ixyz,napsd(na))*ddxyz
+      tmpy0=tmpy0+(vloc_dense(i,1,1)+vh_dense(i,1,1)+biasx*x+biasy*y+biasz*z)*drhoaug3ddy(ixyz,napsd(na))*ddxyz
+      tmpz0=tmpz0+(vloc_dense(i,1,1)+vh_dense(i,1,1)+biasx*x+biasy*y+biasz*z)*drhoaug3ddz(ixyz,napsd(na))*ddxyz
     end do
   end if
 ! -----------------------------------------------------------------------

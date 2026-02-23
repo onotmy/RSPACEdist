@@ -1,21 +1,12 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  var_global8f.F90  12/05/2022-01  **********
+! **********  var_global8f.F90 12/05/2022-01  **********
 
-module var_scalars
+! ========================================================================================================
+
+module var_scalars  ! ==========  Caution!!  ==========
+                    ! This module must not be reffered from other modules
+                    ! except by main routine and subroutine "allocate_arrays".
+                    ! Arrays in this module should be listed after call sentence.
+                    ! =================================
 implicit none 
 
 ! *****  convergence of cg/diis   
@@ -39,7 +30,11 @@ end module var_scalars
 
 ! ========================================================================================================
 
-module var_arrays
+module var_arrays  ! ==========  Caution!!  ==========
+                   ! This module must not be reffered from other modules
+                   ! except by main routine and subroutine "allocate_arrays".
+                   ! Arrays in this module should be listed after call sentence.
+                   ! =================================
 implicit none
 
 ! *****  sum of matrix elements \hat{Dij}+Dij^1-\tilda{Dij^1} [see PRB59 1758 (1999)]

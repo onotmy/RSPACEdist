@@ -1,24 +1,22 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
 ! **********  mathfunctions8f.F90 06/15/2014-01  **********
 
 module mod_mathfunctions
 implicit none
 contains
 
+
+! double precision function fermidis(r,t,rc)
+! implicit none
+! real*8 r,t,rc,acoef
+!   acoef=(r-rc)/t
+!   if (dabs(acoef) .lt. 1.0d2) then
+!     fermidis=1.0d0/(dexp(acoef)+1.0d0)
+!   else
+!     if (acoef .gt. 0.0d0) fermidis=0.0d0
+!     if (acoef .lt. 0.0d0) fermidis=1.0d0
+!   end if
+!   return
+! end function
 
 subroutine fermidis( &
  fwght,r,t,rc, & ! <

@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  scf_dij8f.F90 11/19/2013-01  **********
+! **********  scf_dij8f.F90 01/11/2024-01  **********
 
 module mod_scf_dij
 implicit none
@@ -27,7 +12,7 @@ subroutine scf_dij( &
  npolcon,                                                                 & ! <
  key_natpri_in,key_natpri_inps,key_pp_paw,                                & ! <
  key_polcon_atoms,key_polcon_asa,key_polcon2_none,                        & ! <
- ddx,ddy,ddz,                                                             & ! <
+ ddx,ddy,ddz,biasx,biasy,biasz,                                           & ! <
  npolcon2,ntyppp,nradct,nprj,npr,indspe,natpri,natpri_inf,                & ! <
  nwexp,natinfd,napsd,natprid,lpmx,                                        & ! <
  nlind,noind,lstvecd2,                                                    & ! <
@@ -52,6 +37,7 @@ integer,intent(in) ::nlind(nprjmx,num_spe),noind(nprjmx,num_spe),lstvecd2(num_li
 integer,intent(in) ::lstdx(num_list_d,num_ppcell_d),lstdy(num_list_d,num_ppcell_d),lstdz(num_list_d,num_ppcell_d)
 integer,intent(in) ::ndatx(natom),ndaty(natom),ndatz(natom)
 real*8, intent(in) ::ddx,ddy,ddz
+real*8, intent(in) ::biasx,biasy,biasz
 real*8, intent(in) ::awf(nradmx,nprmx*lmx,num_spe),pwf(nradmx,nprmx*lmx,num_spe),wail((nprmx**2+nprmx)/2,lmx,num_spe)
 real*8, intent(in) ::radial(nradmx,num_spe),dradial(nradmx,num_spe),rfac(0:2*(lmx-1),num_spe)
 real*8, intent(in) ::atx(natom),aty(natom),atz(natom)
@@ -116,7 +102,8 @@ real*8,allocatable ::vcom(:,:),vhm(:,:),vxcm(:,:,:)
    natom,num_spe,num_atcell,nums*ncol,nradmx,npoint,lmx,lrhomx,nprjmx,ncpx_d,ncpy_d,ncpz_d,num_list_d,num_ppcell_d, & ! <
    indspe,natpri,natpri_inf,natinfd,ndatx,ndaty,ndatz,napsd,natprid,ntyppp,nwexp,lpmx,nprj,nradct,                  & ! <
    lstdx,lstdy,lstdz,lstvecd2,                                                                                      & ! <
-   ddx,ddy,ddz,radial,dradial,rfac,vhsmtr,vhaugr,vh_dense,vcorer_all,vloc_dense,qijl,atx,aty,atz,yylm,wt,           & ! <
+   ddx,ddy,ddz,biasx,biasy,biasz,                                                                                   & ! <
+   radial,dradial,rfac,vhsmtr,vhaugr,vh_dense,vcorer_all,vloc_dense,qijl,atx,aty,atz,yylm,wt,                       & ! <
    dtilij_int,dij)                                                                                                    ! >
 !$omp end parallel
 ! now [ dij(:,:,1,:)=dhatij , dij(:,:,ns,:)=0.0d0 if ns>1 ]
@@ -296,7 +283,8 @@ subroutine scf_dij_02( &
  natom,num_spe,num_atcell,numsncol,nradmx,npoint,lmx,lrhomx,nprjmx,ncpx_d,ncpy_d,ncpz_d,num_list_d,num_ppcell_d, & ! <
  indspe,natpri,natpri_inf,natinfd,ndatx,ndaty,ndatz,napsd,natprid,ntyppp,nwexp,lpmx,nprj,nradct,                 & ! <
  lstdx,lstdy,lstdz,lstvecd2,                                                                                     & ! <
- ddx,ddy,ddz,radial,dradial,rfac,vhsmtr,vhaugr,vh_dense,vcorer_all,vloc_dense,qijl,atx,aty,atz,yylm,wt,          & ! <
+ ddx,ddy,ddz,biasx,biasy,biasz,                                                                                  & ! <
+ radial,dradial,rfac,vhsmtr,vhaugr,vh_dense,vcorer_all,vloc_dense,qijl,atx,aty,atz,yylm,wt,                      & ! <
  dtilij_int,dhatij)                                                                                                ! >
 implicit none
 integer,intent(in) ::key_natpri_in,key_natpri_inps,key_pp_paw
@@ -308,6 +296,7 @@ integer,intent(in) ::ntyppp(num_spe),nwexp(num_spe),lpmx(num_spe),nprj(num_spe),
 integer,intent(in) ::lstdx(num_list_d,num_ppcell_d),lstdy(num_list_d,num_ppcell_d),lstdz(num_list_d,num_ppcell_d)
 integer,intent(in) ::lstvecd2(num_list_d,num_ppcell_d)
 real*8, intent(in) ::ddx,ddy,ddz
+real*8, intent(in) ::biasx,biasy,biasz
 real*8, intent(in) ::radial(nradmx,num_spe),dradial(nradmx,num_spe),rfac(0:2*(lmx-1),num_spe)
 real*8, intent(in) ::vhsmtr(nradmx,npoint,num_atcell),vhaugr(nradmx,npoint,num_atcell),vh_dense(ncpx_d,ncpy_d,ncpz_d)
 real*8, intent(in) ::vcorer_all(nradmx,npoint,num_atcell),vloc_dense(ncpx_d,ncpy_d,ncpz_d)
@@ -538,7 +527,8 @@ real*8 ylm01,ylm02,ylm03,ylm04,ylm05,ylm06,ylm07,ylm08,ylm09,ylm10 &
           aug2=aug3*(1.0d0-r2*rcut2in)
           aug1=aug2*(1.0d0-r2*rcut2in)
           aug0=aug1*(1.0d0-r2*rcut2in)
-          tmppot=vloc_dense(lstvecd2(i,iapsd),1,1)+vh_dense(lstvecd2(i,iapsd),1,1)
+          tmppot=vloc_dense(lstvecd2(i,iapsd),1,1)+vh_dense(lstvecd2(i,iapsd),1,1) &
+                 +biasx*(x+atx(na))+biasy*(y+aty(na))+biasz*(z+atz(na))
           ylm01= sqfourpi
           augbaser0=rfac(0,ispe)*aug0
           tmpo0=augbaser0*tmppot*ddxyz
@@ -567,7 +557,8 @@ real*8 ylm01,ylm02,ylm03,ylm04,ylm05,ylm06,ylm07,ylm08,ylm09,ylm10 &
           aug2=aug3*(1.0d0-r2*rcut2in)
           aug1=aug2*(1.0d0-r2*rcut2in)
           aug0=aug1*(1.0d0-r2*rcut2in)
-          tmppot=vloc_dense(lstvecd2(i,iapsd),1,1)+vh_dense(lstvecd2(i,iapsd),1,1)
+          tmppot=vloc_dense(lstvecd2(i,iapsd),1,1)+vh_dense(lstvecd2(i,iapsd),1,1) &
+                 +biasx*(x+atx(na))+biasy*(y+aty(na))+biasz*(z+atz(na))
           ylm01= sqfourpi
           ylm02= sq3fourpi*x*rin
           ylm03= sq3fourpi*y*rin
@@ -621,7 +612,8 @@ real*8 ylm01,ylm02,ylm03,ylm04,ylm05,ylm06,ylm07,ylm08,ylm09,ylm10 &
           aug2=aug3*(1.0d0-r2*rcut2in)
           aug1=aug2*(1.0d0-r2*rcut2in)
           aug0=aug1*(1.0d0-r2*rcut2in)
-          tmppot=vloc_dense(lstvecd2(i,iapsd),1,1)+vh_dense(lstvecd2(i,iapsd),1,1)
+          tmppot=vloc_dense(lstvecd2(i,iapsd),1,1)+vh_dense(lstvecd2(i,iapsd),1,1) &
+                 +biasx*(x+atx(na))+biasy*(y+aty(na))+biasz*(z+atz(na))
           ylm01= sqfourpi
           ylm02= sq3fourpi*x*rin
           ylm03= sq3fourpi*y*rin

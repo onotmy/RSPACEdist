@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  rayleighritz8f_sclpck.F90 04/26/2023-01  **********
+! **********  rayleighritz8f_sclpck.F90 07/24/2023-01  **********
 
 module mod_rayleighritz
 use mod_stopp
@@ -74,6 +59,10 @@ integer numroc
       deallocate(ca,cz,eig,cwork,rwork,iwork)
     end if
   end if
+  call mpi_allreduce(lwork,i,1,mpi_integer,mpi_max,mpicom_space,mpij)
+  lwork=i
+  call mpi_allreduce(liwork,i,1,mpi_integer,mpi_max,mpicom_space,mpij)
+  liwork=i
   i=0
   j=0
   do k=1,neigmx

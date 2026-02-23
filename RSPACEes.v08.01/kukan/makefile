@@ -1,19 +1,21 @@
-# makefile for ver 8f 04/23/2023
+# makefile for ver 8f 08/04/2023
 ###############################################################################
 
 system = xeon
 systm= $(strip $(system))
 
-# [blank]   | [ analyzing hostname (not applicable to all systems) ]
-# xeon      | Intel oneAPI
-# ohtaka    | System B in ISSP (Intel compiler)
-# ohtaka_gcc  | System B in ISSP (GCC compiler)
-# ohtaka_aocc | System B in ISSP (AOCC compiler)
-# ubuntu    | gfortran for Linux PC (serial)
-# fugaku    | mpifrtpx for Fugaku
-# octopus   | octopus in CMC
-# ito       | mpifrt for ito
-# ito-intel | mpiifort for ito
+# [blank]              | [ analyzing hostname (not applicable to all systems) ]
+# xeon                 | Intel oneAPI
+# ohtaka               | System B in ISSP (Intel compiler)
+# ohtaka_gcc           | System B in ISSP (GCC compiler)
+# ohtaka_aocc          | System B in ISSP (AOCC compiler)
+# ohtaka_intel_openmpi | System B in ISSP (Intel compiler & Openmpi)
+# kugui                | System C in ISSP (Intel compiler)
+# ubuntu               | gfortran for Linux PC (serial)
+# fugaku               | mpifrtpx for Fugaku
+# octopus              | octopus in CMC
+# ito                  | mpifrt for ito
+# ito-intel            | mpiifort for ito
 
 
 openmp    = yes
@@ -107,6 +109,67 @@ endif
 endif
 endif
 ###############################################################################
+ifeq ($(systm),ohtaka_intel_openmpi)
+F90         = mpif90 -O3  -march=core-avx2
+OPTDOUBLE   = -r8
+OPTION      = -I$(MKLROOT)/include
+ifeq ($(strip $(openmp)),yes)
+OPENMP      = -qopenmp
+ifeq ($(strip $(sclpck)),yes)
+LOPTION     = -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_openmpi_lp64 -liomp5 -lpthread -lm -ldl
+else
+LOPTION     = -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_openmpi_lp64 -liomp5 -lpthread -lm -ldl
+endif
+else
+OPENMP      =
+ifeq ($(strip $(sclpck)),yes)
+LOPTION     = -L${MKLROOT}/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl
+else
+LOPTION     = -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lpthread -lm -ldl
+endif
+endif
+endif
+###############################################################################
+ifeq ($(systm),xeon)
+F90         = mpiifort
+OPTION =
+ifeq ($(strip $(openmp)),yes)
+OPENMP      = -qopenmp
+ifeq ($(strip $(sclpck)),yes)
+LOPTION     = -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -pthread -lm
+else
+LOPTION     = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm
+endif
+else
+OPENMP      =
+ifeq ($(strip $(sclpck)),yes)
+LOPTION     =  -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -pthread -lm
+else
+LOPTION     =  -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
+endif
+endif
+endif
+###############################################################################
+ifeq ($(systm),kugui)
+F90         = mpiifort
+OPTION = -O3 -march=core-avx2
+ifeq ($(strip $(openmp)),yes)
+OPENMP      = -qopenmp
+ifeq ($(strip $(sclpck)),yes)
+LOPTION     = -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -pthread -lm
+else
+LOPTION     = -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm
+endif
+else
+OPENMP      =
+ifeq ($(strip $(sclpck)),yes)
+LOPTION     =  -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -pthread -lm
+else
+LOPTION     =  -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
+endif
+endif
+endif
+###############################################################################
 ifeq ($(systm),fugaku)
 F90         = mpifrtpx
 OPTION      = -Kfast -Kocl -Kilfunc -Kpreex
@@ -132,7 +195,7 @@ F90         = mpif90
 F90OPT      = -ffree-line-length-none
 FIXOPT      = -ffixed-form
 OPTDOUBLE   = -fdefault-real-8
-OPTION      = 
+OPTION      =
 ifeq ($(strip $(openmp)),yes)
 OPENMP      = -fopenmp
 ifeq ($(strip $(sclpck)),yes)

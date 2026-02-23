@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  scf_occupation8f.F90 06/20/2018-01  **********
+! **********  scf_occupation8f.F90 10/26/2024-01  **********
 
 module mod_scf_occupation
 implicit none
@@ -256,8 +241,9 @@ real*8,  intent(in)   :: tf,tfmax,tfmin,tnumele,polconocc
 real*8,  intent(in)   :: sval_wfc( neigmxdim,nums+1-ncol,numkmx)
 real*8,  intent(out)  :: ferm
 real*8,  intent(out)  :: fnele_wfc(neigmxdim,nums+1-ncol,numkmx)
-integer :: ns,ns1,ns2,nsp,nsp1,nsp2,l,nk,nk2,lbisec
+integer :: ns,ns1,ns2,nsp,nsp1,nsp2,l,nk,nk2,lbisec,i,j
 real*8  :: fwght,ferm1,ferm3,fermp,bisec1,bisec3,bisec,tnumele0,tnumele1,fnelehigh
+logical l_setocc
 
   if (mpre/=0) then
 
@@ -349,6 +335,19 @@ real*8  :: fwght,ferm1,ferm3,fermp,bisec1,bisec3,bisec,tnumele0,tnumele1,fnelehi
           bisec3=bisec
         end if
       end do ! (lbisec < 100)
+      inquire(file='occ_ctr',exist=l_setocc)
+      if (l_setocc) then
+        open(10,file='occ_ctr',form='formatted')
+          i=0
+          j=0
+          do while (i <= 0)
+            read(10,*,end=10) nk,ns,l,fnele_wfc(l,ns,nk)
+            fnele_wfc(l,ns,nk)=fnele_wfc(l,ns,nk)*dble(nwskp(nk)*2)/dble(nwskptot*nums)
+            goto 20
+ 10       i=1
+ 20       end do
+        close(10)
+      end if
 
       if (npolcon==key_polcon_occ) then
         if (nsp==1) then

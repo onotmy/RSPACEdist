@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  pseudocalc8f.F90 04/27/2023-01  **********
+! **********  pseudocalc8f.F90 06/19/2023-01  **********
 
 module mod_pseudocalc
 
@@ -28,7 +13,7 @@ subroutine pseudocalc(natom,num_spe,nperi,nfdg,npmesh,nmesh,nf,nfh,ndisp,lrhomx,
                       num_atcell,num_ppcell,num_ppcell_d,num_list,num_list_d,                                                & ! <
                       key_pp_paw,key_natpri_in,key_natpri_inps,key_natpri_out,key_jel_calc,                                  & ! <
                       eps,veta,psctoff,psftrad,filpp,rctpcc,chrjel,strjel,endjel,                                            & ! <
-                      xmax,ymax,zmax,biasx,biasy,biasz,                                                                      & ! <
+                      xmax,ymax,zmax,                                                                                        & ! <
                       indspe,nlind,noind,nqct,nqctpcc,ntyppp,nprj,lpmx,nradct,                                               & ! <
                       coef,cp,radial,dradial,potc,awf,pwf,                                                                   & ! <
                       yylm,point,wt,                                                                                         & ! <
@@ -49,7 +34,7 @@ integer,intent(in)::new_pwx,new_pwy,new_pwz,new_rsx,new_rsy,new_rsz
 integer,intent(in)::num_atcell,num_ppcell,num_ppcell_d,num_list,num_list_d
 integer,intent(in)::key_pp_paw,key_natpri_in,key_natpri_inps,key_natpri_out,key_jel_calc
 real*8, intent(in)::eps,veta,psctoff,psftrad,filpp,rctpcc,chrjel,strjel,endjel
-real*8, intent(in)::xmax,ymax,zmax,biasx,biasy,biasz
+real*8, intent(in)::xmax,ymax,zmax
 integer,intent(in)::indspe(natom),nlind(nprjmx,num_spe),noind(nprjmx,num_spe),nqct(num_spe),nqctpcc(num_spe)
 integer,intent(in)::ntyppp(num_spe),nprj(num_spe),lpmx(num_spe),nradct(num_spe)
 real*8, intent(in)::coef(0:nqmx,0:7,num_spe),cp(8,num_spe)
@@ -295,7 +280,6 @@ real*8,allocatable::rrr(:,:,:),dderfr(:,:,:),ddexpr(:,:,:)
                      key_natpri_in,key_pp_paw,key_jel_calc,                & ! <
                      indspe,ntyppp,nradct,natpri,natpri_inf,               & ! <
                      xmax,ymax,zmax,                                       & ! <
-                     biasx,biasy,biasz,                                    & ! <
                      chrjel,strjel,endjel,                                 & ! <
                      point,radial,potc,                                    & ! <
                      vcorer,vcorer_all,                                    & ! X
@@ -679,7 +663,7 @@ real*8 r,atmtmpx,atmtmpy,atmtmpz,x,y,z
 integer i,j,k,l,na,l0,l2,l3,ix,iy,iz,jx,jy,jz,iaps,iapsd,nx,ny,nz
 integer ncpx_d,ncpy_d,ncpz_d,npxmax_d,npymax_d,npzmax_d
 real*8 ddx,ddy,ddz
-logical :: lspec
+logical :: lspec,l_atcell,l_ppcell,l_ppcell_d
   ncpx_d=ncpx*nmesh
   ncpy_d=ncpy*nmesh
   ncpz_d=ncpz*nmesh
@@ -689,6 +673,9 @@ logical :: lspec
   ddx=dx/nmesh
   ddy=dy/nmesh
   ddz=dz/nmesh
+  l_atcell=.true.
+  l_ppcell=.true.
+  l_ppcell_d=.true.
 
 ! **********  compute atom-information vector  **********
 !$omp do
@@ -734,7 +721,7 @@ logical :: lspec
     if (natpri(na) .eq. key_natpri_in) then
       l=l+1
       natpri_inf(na)=l
-      if (natpri_inf(na) .gt. num_atcell) call stopp('pseudocalc_01b: num_atcell is too small.')
+      if (natpri_inf(na) .gt. num_atcell) l_atcell=.false.
     end if
   end do
   call mpi_reduce(l,na,1,mpi_integer,mpi_max,0,mpicom_space,mpij)
@@ -885,16 +872,84 @@ if (myrank_glbl==0) write(ndisp,'(a,3i1,a)') 'special routine for mpi_communicat
     if ((natpri(na) .eq. key_natpri_in) .or. (natpri(na) .eq. key_natpri_inps)) then
       iaps=iaps+1
       naps(na)=iaps
-      if (naps(na) .gt. num_ppcell) then
-        write(ndisp,*) 'error on rank=',myr_space,'naps=',naps(na)
-        call stopp('error! num_ppcell is too small.')
-      end if
+      if (naps(na) .gt. num_ppcell) l_ppcell=.false.
     end if
   end do
   call mpi_allreduce(iaps,na,1,mpi_integer,mpi_max,mpicom_space,mpij)
   if (myrank_glbl==0) write(ndisp,*) 'num_ppcell=',na
 !$omp end single
 ! **********************************************************
+
+! **********  check whether the non-local parts of pseudopotential is involved in the subdomain  **********
+! key_natpri_inps : ps is involved.
+! key_natpri_out  : ps is NOT involved.
+!$omp do
+  do na=1,natom
+    natprid(na)=key_natpri_out
+    l0=0
+    do iz=-npzmax_d+1,npzmax_d
+    do iy=-npymax_d+1,npymax_d
+    do ix=-npxmax_d+1,npxmax_d
+      i=ix+ndatx(na)+nxmax*nmesh-myrx*ncpx_d
+      j=iy+ndaty(na)+nymax*nmesh-myry*ncpy_d
+      k=iz+ndatz(na)+nzmax*nmesh-myrz*ncpz_d
+      x=ix*ddx-(atx(na)-(ndatx(na)*ddx-0.5d0*ddx))
+      y=iy*ddy-(aty(na)-(ndaty(na)*ddy-0.5d0*ddy))
+      z=iz*ddz-(atz(na)-(ndatz(na)*ddz-0.5d0*ddz))
+      r=dsqrt(x*x+y*y+z*z)
+      if (r .lt. radial(nradct(indspe(na)),indspe(na))*psctoff) then
+        if (nperi >= 1) then
+          do while (i>2*nxmax*nmesh)
+            i=i-2*nxmax*nmesh
+          end do
+          do while (i<1)
+            i=i+2*nxmax*nmesh
+          end do
+        if (nperi >= 2) then
+          do while (j>2*nymax*nmesh)
+            j=j-2*nymax*nmesh
+          end do
+          do while (j<1)
+            j=j+2*nymax*nmesh
+          end do
+        if (nperi == 3) then
+          do while (k>2*nzmax*nmesh)
+            k=k-2*nzmax*nmesh
+          end do
+          do while (k<1)
+            k=k+2*nzmax*nmesh
+          end do
+        end if
+        end if
+        end if
+        if (((i-1)*(ncpx_d-i).ge.0) .and. ((j-1)*(ncpy_d-j).ge.0) .and. ((k-1)*(ncpz_d-k).ge.0)) then
+          l0=1
+        end if
+      end if
+    end do
+    end do
+    end do
+    if (l0 .eq. 1) natprid(na)=key_natpri_inps
+  end do
+
+!$omp single
+  iapsd=0
+  napsd=0
+  do na=1,natom
+    if (natprid(na) .eq. key_natpri_inps) then
+      iapsd=iapsd+1
+      napsd(na)=iapsd
+      if (napsd(na) .gt. num_ppcell_d) l_ppcell_d=.false.
+    end if
+  end do
+  call mpi_allreduce(iapsd,na,1,mpi_integer,mpi_max,mpicom_space,mpij)
+  if (myrank_glbl==0) write(ndisp,*) 'num_ppcell_d=',na
+!$omp end single
+! *********************************************************************************************************
+
+  if (.not. (l_atcell)) call stopp('pseudocalc_01b: num_atcell is too small.')
+  if (.not. (l_ppcell)) call stopp('error! num_ppcell is too small.')
+  if (.not. (l_ppcell_d)) call stopp('error! num_ppcell_d is too small.')
 
 ! **********  compute list vector for pseudopotential  **********
 !$omp do
@@ -977,76 +1032,6 @@ if (myrank_glbl==0) write(ndisp,'(a,3i1,a)') 'special routine for mpi_communicat
     end if
   end do
 ! ***************************************************************
-
-! **********  check whether the non-local parts of pseudopotential is involved in the subdomain  **********
-! key_natpri_inps : ps is involved.
-! key_natpri_out  : ps is NOT involved.
-!$omp do
-  do na=1,natom
-    natprid(na)=key_natpri_out
-    l0=0
-    do iz=-npzmax_d+1,npzmax_d
-    do iy=-npymax_d+1,npymax_d
-    do ix=-npxmax_d+1,npxmax_d
-      i=ix+ndatx(na)+nxmax*nmesh-myrx*ncpx_d
-      j=iy+ndaty(na)+nymax*nmesh-myry*ncpy_d
-      k=iz+ndatz(na)+nzmax*nmesh-myrz*ncpz_d
-      x=ix*ddx-(atx(na)-(ndatx(na)*ddx-0.5d0*ddx))
-      y=iy*ddy-(aty(na)-(ndaty(na)*ddy-0.5d0*ddy))
-      z=iz*ddz-(atz(na)-(ndatz(na)*ddz-0.5d0*ddz))
-      r=dsqrt(x*x+y*y+z*z)
-      if (r .lt. radial(nradct(indspe(na)),indspe(na))*psctoff) then
-        if (nperi >= 1) then
-          do while (i>2*nxmax*nmesh)
-            i=i-2*nxmax*nmesh
-          end do
-          do while (i<1)
-            i=i+2*nxmax*nmesh
-          end do
-        if (nperi >= 2) then
-          do while (j>2*nymax*nmesh)
-            j=j-2*nymax*nmesh
-          end do
-          do while (j<1)
-            j=j+2*nymax*nmesh
-          end do
-        if (nperi == 3) then
-          do while (k>2*nzmax*nmesh)
-            k=k-2*nzmax*nmesh
-          end do
-          do while (k<1)
-            k=k+2*nzmax*nmesh
-          end do
-        end if
-        end if
-        end if
-        if (((i-1)*(ncpx_d-i).ge.0) .and. ((j-1)*(ncpy_d-j).ge.0) .and. ((k-1)*(ncpz_d-k).ge.0)) then
-          l0=1
-        end if
-      end if
-    end do
-    end do
-    end do
-    if (l0 .eq. 1) natprid(na)=key_natpri_inps
-  end do
-
-!$omp single
-  iapsd=0
-  napsd=0
-  do na=1,natom
-    if (natprid(na) .eq. key_natpri_inps) then
-      iapsd=iapsd+1
-      napsd(na)=iapsd
-      if (napsd(na) .gt. num_ppcell_d) then
-        write(ndisp,*) 'error on rank=',myr_space,'napsd=',napsd(na)
-        call stopp('error! num_ppcell_d is too small.')
-      end if
-    end if
-  end do
-  call mpi_allreduce(iapsd,na,1,mpi_integer,mpi_max,mpicom_space,mpij)
-  if (myrank_glbl==0) write(ndisp,*) 'num_ppcell_d=',na
-!$omp end single
-! *********************************************************************************************************
 
 ! **********  compute list vector for hard local pot. and comp. charge  **********
 !$omp do
@@ -3911,7 +3896,6 @@ subroutine pseudocalc_11(natom,num_spe,nradmx,npoint,num_atcell,nzmax,jelcalc, &
                          key_natpri_in,key_pp_paw,key_jel_calc,                & ! <
                          indspe,ntyppp,nradct,natpri,natpri_inf,               & ! <
                          xmax,ymax,zmax,                                       & ! <
-                         biasx,biasy,biasz,                                    & ! <
                          chrjel,strjel,endjel,                                 & ! <
                          point,radial,potc,                                    & ! <
                          vcorer,vcorer_all,                                    & ! X
@@ -3921,7 +3905,6 @@ integer,intent(in)::natom,num_spe,nradmx,npoint,num_atcell,nzmax,jelcalc
 integer,intent(in)::key_natpri_in,key_pp_paw,key_jel_calc
 integer,intent(in)::indspe(natom),ntyppp(num_spe),nradct(num_spe),natpri(natom),natpri_inf(natom)
 real*8, intent(in)::xmax,ymax,zmax
-real*8, intent(in)::biasx,biasy,biasz
 real*8, intent(in)::chrjel,strjel,endjel
 real*8, intent(in)::point(npoint,3),radial(nradmx,num_spe),potc(nradmx,num_spe)
 real*8, intent(inout)::vcorer(nradmx,npoint,num_atcell)
@@ -3967,7 +3950,7 @@ integer na,ipri,il,ir,kz
           z=point(il,3)*radial(ir,indspe(na))+atz(na)
 ! vcorer does not include Coulomb potential of the owner of augmented sphere.
 ! vcorer_all includes Coulomb potential of all atoms.
-          vcorer(ir,il,ipri)=vcorer(ir,il,ipri)+biasx*x+biasy*y+biasz*z
+          vcorer(ir,il,ipri)=vcorer(ir,il,ipri)
           vcorer_all(ir,il,ipri)=vcorer(ir,il,ipri)+potc(ir,indspe(na))
         end do
       end do

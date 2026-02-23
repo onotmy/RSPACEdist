@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  orbcharge8f.f90 04/18/2023-01  **********
+! **********  orbcharge8f.f90 09/24/2023-01  **********
 
 use mod_mpi!, only:nprocx,nprocy,nprocz
 use mod_stopp
@@ -61,8 +46,8 @@ pi=dacos(-1.0d0)
   fname='output_orbcharge.dat'
   if (len_trim(chdirout) > 0) fname=trim(chdirout)//'/'//fname
   open(nndisp,file=fname)
-  write(6,*) 'computed by orbcharge8f  04/18/2023-01'
-  write(nndisp,*) 'computed by orbcharge8f  04/18/2023-01'
+  write(6,*) 'computed by orbcharge8f  09/24/2023-01'
+  write(nndisp,*) 'computed by orbcharge8f  09/24/2023-01'
   call stopp_initialize (nndisp)
   call mpi_comm_size(mpi_comm_world,i,mpij)
   if (i /= 1) call stopp ('error. # of processes defined in script file must be 1.')
@@ -154,14 +139,14 @@ pi=dacos(-1.0d0)
         select case(nrc)
         case(0)
           do l=1,neigmx
-            if ((sval(l,ns0,nk)-ferm .lt. ene_max) .and. (sval(l,ns0,nk)-ferm .gt. ene_min)) then
+            if ((sval(l,ns,nk)-ferm .lt. ene_max) .and. (sval(l,ns,nk)-ferm .gt. ene_min)) then
               do iz=1,ncpz
               do iy=1,ncpy
               do ix=1,ncpx
                 jz=iz+ncpz*myrz
                 jy=iy+ncpy*myry
                 jx=ix+ncpx*myrx
-                ele(jx,jy,jz)=ele(jx,jy,jz)+svecre(ix,iy,iz,l,ns0,nk)*svecre(ix,iy,iz,l,ns0,nk)*dble(nwskp(nk))/dble(ktot)
+                ele(jx,jy,jz)=ele(jx,jy,jz)+svecre(ix,iy,iz,l,ns,nk)*svecre(ix,iy,iz,l,ns,nk)*dble(nwskp(nk))/dble(ktot)/dble(nums)
               end do
               end do
               end do
@@ -169,14 +154,14 @@ pi=dacos(-1.0d0)
           end do
         case(1)
           do l=1,neigmx
-            if ((sval(l,ns0,nk)-ferm .lt. ene_max) .and. (sval(l,ns0,nk)-ferm .gt. ene_min)) then
+            if ((sval(l,ns,nk)-ferm .lt. ene_max) .and. (sval(l,ns,nk)-ferm .gt. ene_min)) then
               do iz=1,ncpz
               do iy=1,ncpy
               do ix=1,ncpx
                 jz=iz+ncpz*myrz
                 jy=iy+ncpy*myry
                 jx=ix+ncpx*myrx
-                ele(jx,jy,jz)=ele(jx,jy,jz)+real(dconjg(sveccm(ix,iy,iz,l,ns0,nk))*sveccm(ix,iy,iz,l,ns0,nk))*dble(nwskp(nk))/dble(ktot)
+                ele(jx,jy,jz)=ele(jx,jy,jz)+real(dconjg(sveccm(ix,iy,iz,l,ns,nk))*sveccm(ix,iy,iz,l,ns,nk))*dble(nwskp(nk))/dble(ktot)/dble(nums)
               end do
               end do
               end do

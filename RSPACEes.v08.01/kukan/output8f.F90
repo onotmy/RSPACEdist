@@ -1,19 +1,4 @@
-!
-!  Copyright 2023 RSPACE developers
-!
-!  Licensed under the Apache License, Version 2.0 (the "License");
-!  you may not use this file except in compliance with the License.
-!  You may obtain a copy of the License at
-!
-!      http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software
-!  distributed under the License is distributed on an "AS IS" BASIS,
-!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!  See the License for the specific language governing permissions and
-!  limitations under the License.
-!
-! **********  output8f.F90 12/05/2022-01  **********
+! **********  output8f.F90 03/02/2024-01  **********
 
 module mod_output
 contains
@@ -282,7 +267,7 @@ integer, intent(in) :: nso,nums,ncol,neigmx,numk,numkmx
 real*8,  intent(in) :: sval(neigmx,nums+1-ncol,numk),svalsoc(2*neigmx*nso-nso+1,1,numk*nso-nso+1)
 logical  :: isfile,lopen
 integer  :: nfile,irank,nso1,nums1,neigmx1,ns,l,nk,nk2 
-character:: chns*3,chneigmx*3,fname*200
+character:: chns*3,chneigmx*4,fname*200
 real*8 :: ferm
 real*8,allocatable:: svalall(:,:,:) 
 
@@ -354,8 +339,8 @@ real*8,allocatable:: svalall(:,:,:)
         nfile= nfile+1
         inquire(unit=nfile,opened=isfile)
       enddo
-      if (neigmx1>999) call stopp('output_bands: too many bands') 
-      write(chneigmx,fmt='(i3)') neigmx1 
+      if (neigmx1>9999) call stopp('output_bands: too many bands') 
+      write(chneigmx,fmt='(i4)') neigmx1 
       do ns= 1,nums1 
         chns= ''
         if (nums1>1) write(chns,fmt='(i1)') ns
